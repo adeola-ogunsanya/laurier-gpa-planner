@@ -1,0 +1,10 @@
+{
+  "CP104": {"name": "Introduction to Programming", "credits": 0.5, "prereqs": []},
+  "CP164": {"name": "Data Structures I", "credits": 0.5, "prereqs": ["CP104"]},
+  "CP213": {"name": "Introduction to Object-Oriented Programming", "credits": 0.5, "prereqs": ["CP164"]},
+  "MA123": {"name": "Linear Algebra", "credits": 0.5, "prereqs": []},
+  "MA102": {"name": "Mathematics for Computer Science", "credits": 0.5, "prereqs": []},
+  "ES110": {"name": "Environmental Studies", "credits": 0.5, "prereqs": []},
+  "GG101": {"name": "Geography", "credits": 0.5, "prereqs": []},
+  "OL140": {"name": "Leadership Foundations", "credits": 0.5, "prereqs": []}
+}
