@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Laurier GPA Planner</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <h1>Laurier GPA Planner</h1>
+    <p class="sub">Track courses, calculate GPA on the 12-point scale, plan what's next.</p>
+  </div>
+</header>
+
+<main class="wrap">
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for kind, msg in messages %}
+      <div class="flash {{ kind }}">{{ msg }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <!-- Summary numbers -->
+  <section class="stats">
+    <div class="stat">
+      <span class="label">Cumulative GPA</span>
+      <span class="value">{{ '%.2f' % gpa if gpa is not none else '—' }}<small> / 12</small></span>
+    </div>
+    <div class="stat">
+      <span class="label">Credits graded</span>
+      <span class="value">{{ credits_graded }}</span>
+    </div>
+    <div class="stat">
+      <span class="label">Courses tracked</span>
+      <span class="value">{{ course_count }}</span>
+    </div>
+  </section>
+
+  <div class="grid">
+    <!-- Left column: courses -->
+    <div>
+      <section class="card">
+        <h2>Add a course</h2>
+        <form action="{{ url_for('add') }}" method="post" class="add-form">
+          <label>Code
+            <input name="code" list="catalog" placeholder="CP164" required>
+          </label>
+          <label>Term
+            <input name="term" placeholder="Winter 2027" required>
+          </label>
+          <label>Status
+            <select name="status">
+              <option value="in progress">In progress</option>
+              <option value="planned">Planned</option>
+              <option value="completed">Completed</option>
+            </select>
+          </label>
+          <label>Grade <span class="hint">(optional)</span>
+            <input name="grade" placeholder="84 or A-">
+          </label>
+          <button type="submit">Add</button>
+        </form>
+        <datalist id="catalog">
+          {% for code, info in catalog.items() %}
+            <option value="{{ code }}">{{ info.name }}</option>
+          {% endfor %}
+        </datalist>
+      </section>
+
+      {% if not terms %}
+        <section class="card empty">No courses yet. Add your first one above.</section>
+      {% endif %}
+
+      {% for term in terms %}
+      <section class="card">
+        <div class="term-head">
+          <h2>{{ term.name }}</h2>
+          <span class="pill">Term GPA {{ '%.2f' % term.gpa if term.gpa is not none else '—' }}</span>
+        </div>
+        <table>
+          <thead>
+            <tr><th>Course</th><th class="status-col">Status</th><th>Grade</th><th></th></tr>
+          </thead>
+          <tbody>
+          {% for c in term.courses %}
+            <tr>
+              <td><strong>{{ c.code }}</strong>
+                <span class="status mobile-only {{ c.status|replace(' ', '-') }}">{{ c.status }}</span><br>
+                <span class="muted">{{ c.name }}</span></td>
+              <td class="status-col"><span class="status {{ c.status|replace(' ', '-') }}">{{ c.status }}</span></td>
+              <td>
+                <form action="{{ url_for('set_grade', code=c.code) }}" method="post" class="grade-form">
+                  <input name="grade" value="{{ c.grade or '' }}" placeholder="—" aria-label="Grade for {{ c.code }}">
+                  <button type="submit" class="small">Save</button>
+                </form>
+                <span class="muted">{{ grade_label(c.grade) }}</span>
+              </td>
+              <td>
+                <form action="{{ url_for('delete', code=c.code) }}" method="post">
+                  <button type="submit" class="link" aria-label="Remove {{ c.code }}">Remove</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </section>
+      {% endfor %}
+    </div>
+
+    <!-- Right column: tools -->
+    <aside>
+      <section class="card">
+        <h2>What grade do I need?</h2>
+        <form method="get" class="inline">
+          <input name="target" value="{{ target }}" placeholder="Target GPA, e.g. 10">
+          <button type="submit">Calculate</button>
+        </form>
+        {% if target_result == 'none' %}
+          <p class="result">You have no in-progress courses to calculate for.</p>
+        {% elif target_result %}
+          {% if target_result[1] %}
+            <p class="result">Average <strong>{{ target_result[0] }} pts</strong> in your current courses: at least <strong>{{ target_result[1] }}</strong> in each.</p>
+          {% else %}
+            <p class="result bad">Not reachable this term: you'd need {{ target_result[0] }} pts on average (max is 12).</p>
+          {% endif %}
+        {% endif %}
+      </section>
+
+      <section class="card">
+        <h2>Check prerequisites</h2>
+        <form method="get" class="inline">
+          <input name="check" list="catalog" value="{{ check }}" placeholder="Course code, e.g. CP164">
+          <button type="submit">Check</button>
+        </form>
+        {% if check_result %}
+          <div class="result">
+            <p><strong>{{ check_result.code }}</strong> · {{ check_result.name }}</p>
+            {% if not (check_result.met or check_result.missing or check_result.pending) %}
+              <p class="good">No prerequisites. You can take it.</p>
+            {% else %}
+              <ul class="checks">
+                {% for p in check_result.met %}<li class="good">✓ {{ p }} passed</li>{% endfor %}
+                {% for p in check_result.pending %}<li class="warn">◐ {{ p }} in progress</li>{% endfor %}
+                {% for p in check_result.missing %}<li class="bad">✗ {{ p }} needed</li>{% endfor %}
+              </ul>
+            {% endif %}
+          </div>
+        {% endif %}
+      </section>
+
+      <section class="card">
+        <h2>What can I take next?</h2>
+        {% if next_courses %}
+          <ul class="next">
+          {% for code, pending in next_courses %}
+            <li><strong>{{ code }}</strong> {{ catalog[code].name }}
+              {% if pending %}<span class="muted">(after current courses)</span>{% endif %}</li>
+          {% endfor %}
+          </ul>
+        {% else %}
+          <p class="muted">Nothing new in catalog.json right now.</p>
+        {% endif %}
+      </section>
+    </aside>
+  </div>
+</main>
+</body>
+</html>
