@@ -2,6 +2,8 @@
 
 A web app and command-line tool for Wilfrid Laurier University students to track courses, calculate GPA on Laurier's 12-point scale, and plan which courses they can take next based on prerequisites.
 
+**Live demo: [laurier-gpa-planner.onrender.com](https://laurier-gpa-planner.onrender.com)** (free hosting, so the first load can take up to a minute)
+
 ![Screenshot of the web app](screenshot.png)
 
 ## Features
