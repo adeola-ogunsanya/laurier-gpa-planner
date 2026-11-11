@@ -1,0 +1,4 @@
+# Your personal grades stay off GitHub
+my_courses.json
+__pycache__/
+.pytest_cache/

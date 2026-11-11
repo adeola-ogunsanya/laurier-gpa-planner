@@ -6,8 +6,11 @@ when the program closes.
 import json
 import os
 
-COURSES_FILE = "my_courses.json"
-CATALOG_FILE = "catalog.json"
+# Keep the data files next to this script, so it works no matter where
+# it's run from (a terminal, Eclipse, VS Code, ...).
+FOLDER = os.path.dirname(os.path.abspath(__file__))
+COURSES_FILE = os.path.join(FOLDER, "my_courses.json")
+CATALOG_FILE = os.path.join(FOLDER, "catalog.json")
 
 
 def load_json(path, default):
@@ -24,13 +27,13 @@ def save_json(path, data):
         json.dump(data, file, indent=2)
 
 
-def load_courses(path=COURSES_FILE):
-    return load_json(path, [])
+def load_courses():
+    return load_json(COURSES_FILE, [])
 
 
-def save_courses(courses, path=COURSES_FILE):
-    save_json(path, courses)
+def save_courses(courses):
+    save_json(COURSES_FILE, courses)
 
 
-def load_catalog(path=CATALOG_FILE):
-    return load_json(path, {})
+def load_catalog():
+    return load_json(CATALOG_FILE, {})
