@@ -8,19 +8,65 @@ It reuses the same logic as the command-line version:
   grades.py  -> GPA math
   prereqs.py -> prerequisite checks
   storage.py -> saving to my_courses.json
+
+Two ways of saving courses:
+  - Normal mode (on your computer): saved to my_courses.json.
+  - Demo mode (the public website, DEMO_MODE=1): each visitor gets their
+    own private list stored in their browser session, pre-filled with
+    sample courses. Nothing is shared between visitors.
 """
 
-from flask import Flask, render_template, request, redirect, url_for, flash
+import copy
+import os
 
+from flask import Flask, render_template, request, redirect, url_for, flash, session
+
+import storage
 from grades import calculate_gpa, grade_to_points, percent_to_letter, points_needed_for_target
 from prereqs import check_prereqs, eligible_courses
-from storage import load_courses, save_courses, load_catalog
 from planner import term_sort_key, find_course
 
 app = Flask(__name__)
-app.secret_key = "change-me"  # needed for flash() messages
+# The secret key signs the browser session. Online it comes from an
+# environment variable so it isn't public on GitHub.
+app.secret_key = os.environ.get("SECRET_KEY", "dev-only-secret")
 
 STATUSES = ["completed", "in progress", "planned"]
+DEMO_MODE = os.environ.get("DEMO_MODE") == "1"
+DEMO_MAX_COURSES = 25  # browser sessions are small, so keep the list short
+
+SAMPLE_COURSES = [
+    {"code": "CP104", "name": "Introduction to Programming", "credits": 0.5,
+     "term": "Fall 2026", "status": "completed", "grade": "88"},
+    {"code": "MA123", "name": "Linear Algebra", "credits": 0.5,
+     "term": "Fall 2026", "status": "completed", "grade": "82"},
+    {"code": "ES110", "name": "Environmental Studies", "credits": 0.5,
+     "term": "Fall 2026", "status": "in progress", "grade": None},
+    {"code": "GG101", "name": "Geography", "credits": 0.5,
+     "term": "Fall 2026", "status": "in progress", "grade": None},
+    {"code": "CP164", "name": "Data Structures I", "credits": 0.5,
+     "term": "Winter 2027", "status": "planned", "grade": None},
+]
+
+
+def load_courses():
+    """Get the course list from the right place for the current mode."""
+    if DEMO_MODE:
+        if "courses" not in session:
+            session["courses"] = copy.deepcopy(SAMPLE_COURSES)
+        return session["courses"]
+    return storage.load_courses()
+
+
+def save_courses(courses):
+    if DEMO_MODE:
+        session["courses"] = courses
+    else:
+        storage.save_courses(courses)
+
+
+def load_catalog():
+    return storage.load_catalog()
 
 
 def clean_code(text):
@@ -100,6 +146,7 @@ def home():
         target=target, target_result=target_result,
         check=check, check_result=check_result,
         grade_label=grade_label,
+        demo_mode=DEMO_MODE,
     )
 
 
@@ -119,6 +166,9 @@ def add():
         return redirect(url_for("home"))
     if find_course(courses, code):
         flash(f"{code} is already in your list.", "error")
+        return redirect(url_for("home"))
+    if DEMO_MODE and len(courses) >= DEMO_MAX_COURSES:
+        flash(f"The demo holds up to {DEMO_MAX_COURSES} courses. Remove one or reset the demo.", "error")
         return redirect(url_for("home"))
     if status not in STATUSES:
         status = "planned"
@@ -166,6 +216,15 @@ def delete(code):
         courses.remove(course)
         save_courses(courses)
         flash(f"Removed {code}.", "ok")
+    return redirect(url_for("home"))
+
+
+@app.route("/reset", methods=["POST"])
+def reset():
+    """Demo mode only: put the sample courses back."""
+    if DEMO_MODE:
+        session["courses"] = copy.deepcopy(SAMPLE_COURSES)
+        flash("Demo reset to the sample courses.", "ok")
     return redirect(url_for("home"))
 
 

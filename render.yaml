@@ -1,0 +1,16 @@
+# Render deployment settings ("Blueprint").
+# Render reads this file and sets up the free website automatically.
+services:
+  - type: web
+    name: laurier-gpa-planner
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: DEMO_MODE
+        value: "1"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: PYTHON_VERSION
+        value: 3.12.7

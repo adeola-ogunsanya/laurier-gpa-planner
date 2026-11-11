@@ -141,6 +141,23 @@ tr:last-child td { border-bottom: 0; }
 .warn { color: var(--warn); }
 .bad { color: var(--bad); }
 
+/* Demo banner (public website only) */
+.demo-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  background: #fff8e6;
+  border: 1px solid #f5d98a;
+  color: #5c4500;
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+}
+button.ghost { background: #fff; color: var(--purple); border: 1px solid var(--line); white-space: nowrap; }
+button.ghost:hover { background: #f3edff; }
+
 /* Flash messages */
 .flash { padding: 10px 14px; border-radius: 8px; margin-bottom: 12px; font-weight: 500; }
 .flash.ok { background: #e6f4ec; color: var(--good); }

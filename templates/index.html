@@ -16,12 +16,6 @@
 
 <main class="wrap">
 
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% for kind, msg in messages %}
-      <div class="flash {{ kind }}">{{ msg }}</div>
-    {% endfor %}
-  {% endwith %}
-
   <!-- Summary numbers -->
   <section class="stats">
     <div class="stat">
@@ -37,6 +31,22 @@
       <span class="value">{{ course_count }}</span>
     </div>
   </section>
+
+  {% if demo_mode %}
+    <div class="demo-bar">
+      <span><strong>Live demo.</strong> Try it out: your changes are private to your browser. The sample courses are made up.</span>
+      <form action="{{ url_for('reset') }}" method="post">
+        <button type="submit" class="small ghost">Reset demo</button>
+      </form>
+    </div>
+  {% endif %}
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for kind, msg in messages %}
+      <div class="flash {{ kind }}">{{ msg }}</div>
+    {% endfor %}
+  {% endwith %}
+
 
   <div class="grid">
     <!-- Left column: courses -->

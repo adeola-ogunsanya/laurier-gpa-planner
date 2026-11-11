@@ -37,6 +37,10 @@ python planner.py
 
 Both versions share the same data file, so courses added in one show up in the other.
 
+## Deployment
+
+The public demo runs on [Render](https://render.com)'s free tier, configured by `render.yaml` and served with gunicorn. It runs with `DEMO_MODE=1`, which stores each visitor's courses in their own signed browser session (pre-filled with sample courses) instead of a shared file, so visitors never see each other's data and nothing is lost when the server restarts. The free tier sleeps after 15 minutes without visitors, so the first load can take about a minute.
+
 ## Run the tests
 
 ```bash
@@ -57,7 +61,9 @@ python -m pytest
 | `storage.py` | Loads/saves JSON files |
 | `catalog.json` | Courses and their prerequisites |
 | `test_planner.py` | Unit tests for the logic |
-| `test_app.py` | Tests for the website |
+| `test_app.py` | Tests for the website, including demo mode |
+| `render.yaml` | Settings for the free Render deployment |
+| `requirements.txt` | Packages to install |
 
 ## How GPA is calculated
 
